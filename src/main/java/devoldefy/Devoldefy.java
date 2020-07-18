@@ -28,6 +28,8 @@ public class Devoldefy {
     public static boolean test = false;
     
     private static final String CSV = "http://export.mcpbot.bspk.rs/mcp_{csv_type}_nodoc/{csv_build}-{mc_version}/mcp_{csv_type}_nodoc-{csv_build}-{mc_version}.zip";
+    private static final String CSV_NEW =
+        "https://files.minecraftforge.net/maven/de/oceanlabs/mcp/mcp_{csv_type}/{csv_build}-{mc_version}/mcp_{csv_type}-{csv_build}-{mc_version}.zip";
     private static final String SRG = "https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/{mc_version}/joined.tsrg";
     private static final String SRG_NEW = "https://raw.githubusercontent.com/MinecraftForge/MCPConfig/master/versions/release/{mc_version}/joined.tsrg";
     private static final String YARN = "http://maven.modmuss50.me/net/fabricmc/yarn/{target_minecraft_version}+build.{yarn_build}/yarn-{target_minecraft_version}+build.{yarn_build}.jar";
@@ -156,7 +158,7 @@ public class Devoldefy {
         
         System.out.println("Begin Downloading");
         
-        String csvUrl = CSV.replace("{mc_version}", mcpVersion).replace(
+        String csvUrl = CSV_NEW.replace("{mc_version}", mcpVersion).replace(
             "{csv_type}",
             mcpChannel
         ).replace("{csv_build}", mcpBuild);
