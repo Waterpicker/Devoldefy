@@ -20,7 +20,7 @@ Add these into build.gradle
 ```
 task printClasspath {
 	doLast {
-		configurations.testCompile.each { println it }
+		configurations.testCompile.each { println "\"" + (it.toString().replace("\\","/")) + "\"," }
 	}
 }
 ```
