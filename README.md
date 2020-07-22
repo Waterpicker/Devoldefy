@@ -9,7 +9,13 @@ Use config file as input instead of console input.
 
 Fix cannot remap method override with generic parameter (by some reflection hack).
 
-Support remapping client server marker annotation
+It can add additional mappings. For example add this to remap client server marker
+```
+"additionalClassMappings": {
+    "net/minecraftforge/api/distmarker/OnlyIn": "net/fabricmc/api/Environment",
+    "net/minecraftforge/api/distmarker/Dist": "net/fabricmc/api/EnvType"
+  },
+```
 
 # How to use it
 remapforge.json is an example
