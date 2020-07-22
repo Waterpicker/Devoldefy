@@ -11,7 +11,7 @@ Fix cannot remap method override with generic parameter (by some reflection hack
 
 It can add additional mappings. For example add this to remap client server marker
 ```
-"additionalClassMappings": {
+  "additionalClassMappings": {
     "net/minecraftforge/api/distmarker/OnlyIn": "net/fabricmc/api/Environment",
     "net/minecraftforge/api/distmarker/Dist": "net/fabricmc/api/EnvType"
   },

@@ -6,7 +6,10 @@
   "yarnBuild": "15",
   "mcpSourceCode": "C:\\games\\mc_modding\\my_devoldefy\\mcpsource",
   "yarnSourceCode": "C:\\games\\mc_modding\\my_devoldefy\\yarnsource",
-  "remapClientServerMarker": true,
+  "additionalClassMappings": {
+    "net/minecraftforge/api/distmarker/OnlyIn": "net/fabricmc/api/Environment",
+    "net/minecraftforge/api/distmarker/Dist": "net/fabricmc/api/EnvType"
+  },
   "classpath": [
     "C:/Program Files/Java/jdk1.8.0_181/jre/lib/charsets.jar",
     "C:/Program Files/Java/jdk1.8.0_181/jre/lib/deploy.jar",
