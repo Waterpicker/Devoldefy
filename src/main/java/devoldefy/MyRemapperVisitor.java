@@ -67,6 +67,9 @@ class MyRemapperVisitor extends MySimpleRemapperVisitor {
         if (binding.isTypeVariable()) {
             return;
         }
+        if (binding.getBinaryName() == null) {
+            return;
+        }
         
         ClassMapping<?, ?> mapping = this.mappings.computeClassMapping(binding.getBinaryName()).orElse(
             null);
@@ -220,6 +223,12 @@ class MyRemapperVisitor extends MySimpleRemapperVisitor {
                 case IBinding.TYPE:
                     ITypeBinding typeBinding = (ITypeBinding) binding;
                     String name = typeBinding.getBinaryName();
+
+                    if (name == null) {
+                        System.out.println("Null binary name " + typeBinding);
+                        return false;
+                    }
+
                     ClassMapping<?, ?> mapping = this.mappings.computeClassMapping(name).orElse(null);
                     if (mapping != null && !name.equals(mapping.getFullDeobfuscatedName().replace(
                         '/',
