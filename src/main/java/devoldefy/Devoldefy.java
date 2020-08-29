@@ -632,33 +632,43 @@ public class Devoldefy {
         }
 
         public void writeDebugMapping(File file) {
-            gson.toJson(this);
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            try (FileWriter fileWriter = new FileWriter(file)) {
+                gson.toJson(this, fileWriter);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 //            dir.mkdirs();
 //            writeMappingData(this.classes, new File(dir, "classes.txt"));
 //            writeMappingData(this.fields, new File(dir, "fields.txt"));
 //            writeMappingData(this.methods, new File(dir, "methods.txt"));
         }
 
-        private void writeMappingData(Map<String, String> data, File textFile) {
-            try {
-                textFile.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            try (FileWriter fileWriter = new FileWriter(textFile)) {
-                data.entrySet().stream()
-                    .sorted(Comparator.comparing(Map.Entry::getKey))
-                    .forEach(entry -> {
-                        try {
-                            fileWriter.write(entry.getKey() + "->" + entry.getValue() + "\n");
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    });
-                fileWriter.flush();
-            } catch (IOException e) {
-            }
-        }
+//        private void writeMappingData(Map<String, String> data, File textFile) {
+//            try {
+//                textFile.createNewFile();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//            try (FileWriter fileWriter = new FileWriter(textFile)) {
+//                data.entrySet().stream()
+//                    .sorted(Comparator.comparing(Map.Entry::getKey))
+//                    .forEach(entry -> {
+//                        try {
+//                            fileWriter.write(entry.getKey() + "->" + entry.getValue() + "\n");
+//                        } catch (IOException e) {
+//                            e.printStackTrace();
+//                        }
+//                    });
+//                fileWriter.flush();
+//            } catch (IOException e) {
+//            }
+//        }
     }
 
 }
