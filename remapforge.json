@@ -4,8 +4,9 @@
   "mcpBuild": "20191119",
   "yarnGameVersion": "1.14.4",
   "yarnBuild": "15",
-  "mcpSourceCode": "C:\\games\\mc_modding\\my_devoldefy\\mcpsource",
-  "yarnSourceCode": "C:\\games\\mc_modding\\my_devoldefy\\yarnsource",
+  "sourceFromTo": {
+    "C:\\games\\mc_modding\\my_devoldefy\\mcpsource": "C:\\games\\mc_modding\\my_devoldefy\\yarnsource"
+  },
   "additionalClassMappings": {
     "net/minecraftforge/api/distmarker/OnlyIn": "net/fabricmc/api/Environment",
     "net/minecraftforge/api/distmarker/Dist": "net/fabricmc/api/EnvType"
