@@ -12,13 +12,10 @@ public class Config {
     public String yarnGameVersion;
     public String yarnBuild;
 
-    public String mcpSourceCode;
-    public String yarnSourceCode;
+    public Map<String,String> sourceFromTo;
+    public Map<String,String> finalCopy;
 
     public String[] classpath;
-
-    public String copiedSubPackage;
-    public String copyTargetDir;
 
     public Set<String> additionalArguments;
 

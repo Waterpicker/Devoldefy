@@ -1,6 +1,8 @@
 package devoldefy;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import javafx.util.Pair;
 import org.cadixdev.lorenz.MappingSet;
 import org.cadixdev.lorenz.impl.MappingSetImpl;
 import org.cadixdev.lorenz.impl.MappingSetModelFactoryImpl;
@@ -27,6 +29,8 @@ import java.util.zip.ZipFile;
 public class Devoldefy {
     public static boolean test = false;
 
+    public static Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
     private static final String CSV = "http://export.mcpbot.bspk.rs/mcp_{csv_type}_nodoc/{csv_build}-{mc_version}/mcp_{csv_type}_nodoc-{csv_build}-{mc_version}.zip";
     private static final String CSV_NEW =
         "https://files.minecraftforge.net/maven/de/oceanlabs/mcp/mcp_{csv_type}/{csv_build}-{mc_version}/mcp_{csv_type}-{csv_build}-{mc_version}.zip";
@@ -38,8 +42,6 @@ public class Devoldefy {
     public static final boolean needsConfirmation = false;
 
     public static void main(String[] args) throws Exception {
-
-
         String configFileName;
 
         if (args.length == 0) {
@@ -57,7 +59,7 @@ public class Devoldefy {
         }
 
         String data = Files.lines(configFile.toPath()).collect(Collectors.joining());
-        Config config = (new Gson()).fromJson(data, Config.class);
+        Config config = gson.fromJson(data, Config.class);
 
         String mcpVersion = config.mcpGameVersion;
         String mcpChannel = config.mcpChannel;
@@ -74,9 +76,6 @@ public class Devoldefy {
             mcpToYarn = !config.additionalArguments.contains("invert");
         }
 
-        String sourceRoot = mcpToYarn ? config.mcpSourceCode : config.yarnSourceCode;
-        String targetRoot = mcpToYarn ? config.yarnSourceCode : config.mcpSourceCode;
-
         String[] classPath = config.classpath;
 
         perform(
@@ -85,8 +84,7 @@ public class Devoldefy {
             mcpBuild,
             yarnVersion,
             yarnBuild,
-            sourceRoot,
-            targetRoot,
+            config.sourceFromTo,
             Arrays.stream(classPath),
             mcpToYarn,
             new File(configFileName + "_cache"),
@@ -95,29 +93,36 @@ public class Devoldefy {
             config.additionalMethodMappings
         );
 
-        if (config.copiedSubPackage != null && !config.copiedSubPackage.isEmpty()) {
-            Path copyFrom = new File(targetRoot).toPath().resolve(config.copiedSubPackage);
-            Path copyTo = new File(config.copyTargetDir).toPath();
-            System.out.println("Copy from " + copyFrom);
-            System.out.println("Copy to " + copyTo);
+        if (config.finalCopy != null) {
+            config.finalCopy.forEach((from, to) -> {
+                Path copyFrom = new File(from).toPath();
+                Path copyTo = new File(to).toPath();
+                System.out.println("Copy from " + copyFrom);
+                System.out.println("Copy to " + copyTo);
 
-            if (needsConfirmation) {
-                System.out.println("Input \"confirm\" to copy");
+                if (needsConfirmation) {
+                    System.out.println("Input \"confirm\" to copy");
 
-                String confirmMessage = new Scanner(System.in).nextLine().trim();
+                    String confirmMessage = new Scanner(System.in).nextLine().trim();
 
-                if (!confirmMessage.equals("confirm")) {
-                    System.out.println("didn't copy");
-                    return;
+                    if (!confirmMessage.equals("confirm")) {
+                        System.out.println("didn't copy");
+                        return;
+                    }
                 }
-            }
 
-            deleteDirectory(copyTo);
-            copyDirectory(copyFrom, copyTo);
+                try {
+                    deleteDirectory(copyTo);
+                    copyDirectory(copyFrom, copyTo);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
         }
     }
 
     private static void copyDirectory(Path sourcePath, Path targetPath) throws IOException {
+        targetPath.toFile().mkdir();
         Files.walkFileTree(sourcePath, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult preVisitDirectory(
@@ -150,8 +155,7 @@ public class Devoldefy {
         String mcpBuild,
         String yarnVersion,
         String yarnBuild,
-        String sourceRoot,
-        String targetRoot,
+        Map<String, String> sourceFromTo,
         Stream<String> classPathLines,
         boolean mcpToYarn,
         File cacheFileDir,
@@ -213,17 +217,24 @@ public class Devoldefy {
             );
         }
 
-        mappings.writeDebugMapping(new File(cacheFileDir, "chained_mapping"));
-        srg.writeDebugMapping(new File(cacheFileDir, "mcp"));
-        yarn.writeDebugMapping(new File(cacheFileDir, "yarn"));
+        mappings.writeDebugMapping(new File(cacheFileDir, "chained_mapping.json"));
+        srg.writeDebugMapping(new File(cacheFileDir, "mcp.json"));
+        yarn.writeDebugMapping(new File(cacheFileDir, "yarn.json"));
 
         System.out.println("Start remapping");
 
-        File sourceDir = new File(sourceRoot);
-        File targetDir = new File(targetRoot);
-        targetDir.mkdirs();
-
-        deleteDirectory(targetDir.toPath());
+        HashMap<Path, Path> pathFromTo = new HashMap<>();
+        sourceFromTo.forEach((from, to) -> {
+            File sourceDir = new File(from);
+            File targetDir = new File(to);
+            targetDir.mkdirs();
+            try {
+                deleteDirectory(targetDir.toPath());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            pathFromTo.put(sourceDir.toPath(), targetDir.toPath());
+        });
 
         List<Path> classpath = classPathLines.map(
             line -> {
@@ -235,7 +246,9 @@ public class Devoldefy {
             }
         ).collect(Collectors.toList());
 
-        remap(sourceDir.toPath(), targetDir.toPath(), classpath, mappings);
+        classpath.addAll(pathFromTo.keySet());
+
+        remap(pathFromTo, classpath, mappings);
 
         System.out.println("Finished");
     }
@@ -264,6 +277,9 @@ public class Devoldefy {
     }
 
     private static void deleteDirectory(Path targetPath) throws IOException {
+        if (!targetPath.toFile().exists()) {
+            return;
+        }
         Files.walk(targetPath).sorted(Comparator.reverseOrder()).map(Path::toFile)
             .forEach(File::delete);
     }
@@ -443,8 +459,7 @@ public class Devoldefy {
 
 
     private static void remap(
-        Path source,
-        Path target,
+        Map<Path, Path> fromTo,
         List<Path> classpath,
         Mappings mappings
     ) throws Exception {
@@ -478,7 +493,15 @@ public class Devoldefy {
         mercury.getProcessors().add(MixinRemapper.create(mappingSet));
         mercury.getProcessors().add(new MyRemapper(mappingSet));
 
-        mercury.rewrite(source, target);
+        fromTo.forEach((from, to) -> {
+            try {
+                mercury.rewrite(from, to);
+            } catch (Exception e) {
+                throw new RuntimeException(
+                    "Remapping " + from, e
+                );
+            }
+        });
     }
 
     private static String getDescriptor(String method) {
@@ -608,11 +631,12 @@ public class Devoldefy {
             return result;
         }
 
-        public void writeDebugMapping(File dir) {
-            dir.mkdirs();
-            writeMappingData(this.classes, new File(dir, "classes.txt"));
-            writeMappingData(this.fields, new File(dir, "fields.txt"));
-            writeMappingData(this.methods, new File(dir, "methods.txt"));
+        public void writeDebugMapping(File file) {
+            gson.toJson(this);
+//            dir.mkdirs();
+//            writeMappingData(this.classes, new File(dir, "classes.txt"));
+//            writeMappingData(this.fields, new File(dir, "fields.txt"));
+//            writeMappingData(this.methods, new File(dir, "methods.txt"));
         }
 
         private void writeMappingData(Map<String, String> data, File textFile) {
